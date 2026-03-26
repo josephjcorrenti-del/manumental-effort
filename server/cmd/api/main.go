@@ -62,7 +62,7 @@ func main() {
 
 	authGroup := r.Group("/auth")
 	authGroup.Use(auth.AuthMiddleware(tokenManager))
-	authGroup.GET("/me", authHandler.Me)
+	authGroup.GET("/me", userHandler.GetCurrentUser)
 
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("run server: %v", err)
