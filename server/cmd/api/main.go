@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"manumental-effort/server/internal/auth"
 	"manumental-effort/server/internal/platform/config"
 	"manumental-effort/server/internal/platform/mongodb"
 	"manumental-effort/server/internal/users"
@@ -38,7 +39,12 @@ func main() {
 		log.Fatalf("ensure user indexes: %v", err)
 	}
 
-	userService := users.NewService(userRepository)
+	authRepository := auth.NewRepository(mongoClient.Database)
+	tokenManager := auth.NewTokenManager(cfg.Auth.JWTSigningKey, cfg.Auth.TokenExpiryMinutes)
+	authService := auth.NewService(authRepository, tokenManager)
+	authHandler := auth.NewHandler(authService)
+
+	userService := users.NewService(userRepository, authRepository)
 	userHandler := users.NewHandler(userService)
 
 	r := gin.Default()
@@ -52,6 +58,11 @@ func main() {
 
 	r.POST("/users", userHandler.CreateUser)
 	r.GET("/users/:id", userHandler.GetUserByID)
+	r.POST("/auth/login", authHandler.Login)
+
+	authGroup := r.Group("/auth")
+	authGroup.Use(auth.AuthMiddleware(tokenManager))
+	authGroup.GET("/me", authHandler.Me)
 
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("run server: %v", err)

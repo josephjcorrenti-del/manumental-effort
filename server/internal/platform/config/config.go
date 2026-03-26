@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Server  ServerConfig  `yaml:"server"`
 	MongoDB MongoDBConfig `yaml:"mongodb"`
+	Auth    AuthConfig    `yaml:"auth"`
 }
 
 type ServerConfig struct {
@@ -19,6 +20,11 @@ type ServerConfig struct {
 type MongoDBConfig struct {
 	URI      string `yaml:"uri"`
 	Database string `yaml:"database"`
+}
+
+type AuthConfig struct {
+	JWTSigningKey      string `yaml:"jwt_signing_key"`
+	TokenExpiryMinutes int    `yaml:"token_expiry_minutes"`
 }
 
 func Load(path string) (*Config, error) {

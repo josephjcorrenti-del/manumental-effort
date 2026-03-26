@@ -6,16 +6,20 @@ import (
 	"strings"
 	"time"
 
+	"manumental-effort/server/internal/auth"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Service struct {
-	repository *Repository
+	repository     *Repository
+	authRepository *auth.Repository
 }
 
-func NewService(repository *Repository) *Service {
+func NewService(repository *Repository, authRepository *auth.Repository) *Service {
 	return &Service{
-		repository: repository,
+		repository:     repository,
+		authRepository: authRepository,
 	}
 }
 
@@ -38,6 +42,23 @@ func (s *Service) CreateUser(ctx context.Context, input CreateUserInput) (*User,
 	}
 
 	if err := s.repository.Create(ctx, user); err != nil {
+		return nil, err
+	}
+
+	passwordHash, err := auth.HashPassword(input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+
+	credential := &auth.Credential{
+		UserID:          user.ID,
+		EmailNormalized: user.EmailNormalized,
+		PasswordHash:    passwordHash,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
+	if err := s.authRepository.Create(ctx, credential); err != nil {
 		return nil, err
 	}
 

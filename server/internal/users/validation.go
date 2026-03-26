@@ -33,6 +33,10 @@ func validateCreateUserInput(input CreateUserInput) error {
 		return fmt.Errorf("email is required")
 	}
 
+	if input.Password == "" {
+		return fmt.Errorf("password is required")
+	}
+
 	if len(input.Username) < 3 || len(input.Username) > 32 {
 		return fmt.Errorf("username must be between 3 and 32 characters")
 	}
@@ -43,6 +47,10 @@ func validateCreateUserInput(input CreateUserInput) error {
 
 	if !strings.Contains(input.Email, "@") {
 		return fmt.Errorf("email must be valid")
+	}
+
+	if len(input.Password) < 8 {
+		return fmt.Errorf("password must be at least 8 characters")
 	}
 
 	return nil

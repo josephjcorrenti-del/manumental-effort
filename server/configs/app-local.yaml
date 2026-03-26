@@ -4,3 +4,7 @@ server:
 mongodb:
   uri: "mongodb://localhost:27017"
   database: "manumental_effort"
+
+auth:
+  jwt_signing_key: "change-me-for-real-use"
+  token_expiry_minutes: 60
