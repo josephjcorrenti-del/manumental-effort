@@ -1,0 +1,6 @@
+server:
+  port: "8081"
+
+mongodb:
+  uri: "mongodb://localhost:27017"
+  database: "manumental_effort"
