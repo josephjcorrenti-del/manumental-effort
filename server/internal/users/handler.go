@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"manumental-effort/server/internal/auth"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -73,18 +75,10 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 }
 
 func (h *Handler) GetCurrentUser(c *gin.Context) {
-	userIDValue, exists := c.Get("user_id")
-	if !exists {
+	userID, err := auth.GetUserID(c)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "authenticated user context missing",
-		})
-		return
-	}
-
-	userID, ok := userIDValue.(string)
-	if !ok || userID == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "invalid authenticated user context",
+			"error": err.Error(),
 		})
 		return
 	}

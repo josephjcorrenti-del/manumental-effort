@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
-	"time"
-
 	"manumental-effort/server/internal/auth"
+	"manumental-effort/server/internal/channels"
+	"manumental-effort/server/internal/memberships"
 	"manumental-effort/server/internal/platform/config"
 	"manumental-effort/server/internal/platform/mongodb"
+	"manumental-effort/server/internal/spaces"
 	"manumental-effort/server/internal/users"
+	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,6 +41,19 @@ func main() {
 		log.Fatalf("ensure user indexes: %v", err)
 	}
 
+	membershipRepository := memberships.NewRepository(mongoClient.Database)
+
+	membershipIndexCtx, membershipIndexCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer membershipIndexCancel()
+
+	if err := membershipRepository.EnsureIndexes(membershipIndexCtx); err != nil {
+		log.Fatalf("ensure membership indexes: %v", err)
+	}
+
+	channelRepository := channels.NewRepository(mongoClient.Database)
+	channelService := channels.NewService(channelRepository, membershipRepository)
+	channelHandler := channels.NewHandler(channelService)
+
 	authRepository := auth.NewRepository(mongoClient.Database)
 	tokenManager := auth.NewTokenManager(cfg.Auth.JWTSigningKey, cfg.Auth.TokenExpiryMinutes)
 	authService := auth.NewService(authRepository, tokenManager)
@@ -46,6 +61,10 @@ func main() {
 
 	userService := users.NewService(userRepository, authRepository)
 	userHandler := users.NewHandler(userService)
+
+	spaceRepository := spaces.NewRepository(mongoClient.Database)
+	spaceService := spaces.NewService(spaceRepository, membershipRepository)
+	spaceHandler := spaces.NewHandler(spaceService)
 
 	r := gin.Default()
 
@@ -63,6 +82,13 @@ func main() {
 	authGroup := r.Group("/auth")
 	authGroup.Use(auth.AuthMiddleware(tokenManager))
 	authGroup.GET("/me", userHandler.GetCurrentUser)
+
+	spacesGroup := r.Group("/spaces")
+	spacesGroup.Use(auth.AuthMiddleware(tokenManager))
+	spacesGroup.POST("", spaceHandler.CreateSpace)
+	spacesGroup.POST("/:id/join", spaceHandler.JoinSpace)
+	spacesGroup.POST("/:id/channels", channelHandler.CreateChannel)
+	spacesGroup.GET("/:id/channels", channelHandler.ListChannels)
 
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("run server: %v", err)
