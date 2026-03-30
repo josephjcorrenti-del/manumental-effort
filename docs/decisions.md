@@ -100,3 +100,30 @@ Design Principle
 - Avoid over-engineering in v1.
 - Preserve flexibility for future expansion.
 
+scripting principle
+- add scripts after manual steps are understood and stable
+- do not automate unstable setup too early
+- prefer small, explicit scripts over large opaque setup scripts
+
+phase 6 auth decisions
+- use email + password login
+- store password hashes only
+- use bcrypt for password hashing
+- use JWT bearer tokens for API authentication
+- keep auth credentials separate from user profile documents
+- normalize email for auth lookup
+- attach authenticated user id to Gin request context
+
+Auth rules
+
+Public
+- POST /users
+- POST /auth/login
+- GET /users/{id} (current behavior; revisit later if needed)
+
+Authenticated
+- GET /auth/me
+
+Future
+- all create/update/delete routes require authentication by default
+- write routes should use authenticated user id as actor identity
