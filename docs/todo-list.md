@@ -25,94 +25,167 @@ phase 1 - project initialization
 
 phase 2 - core documentation
 [x] create docs/v1-scope.md
-[~] define what v1 includes
+[x] define v1 includes / excludes
 [~] define what v1 excludes
 [x] create docs/domain-model.md
+[~] define core objects (good enough for v1, will evolve)
 [ ] define core objects:
         - user
         - space
         - channel
         - message
         - membership
-[ ] create docs/system-architecture.md
-[ ] define:
+[x] create docs/system-architecture.md
+[~] define architecture (correct, not exhaustive)
         - client / server / shared structure
         - REST + WebSocket model
         - MongoDB usage
         - Mint-hosted deployment
-[~] create docs/api-principles.md
-[ ] define:
+[x] create docs/api-principles.md
+[~] define API rules (good baseline, will expand)
         - auth model
         - pagination model
         - error format
         - naming conventions
 
 phase 2.5 - naming + repo conventions
-[ ] record repo naming conventions in docs/decisions.md
-[ ] record Go package/file naming conventions in docs/api-principles.md
-[ ] ensure repo-wide paths use hyphens where appropriate
+[x] record repo naming conventions in docs/decisions.md
+[x] record Go package/file naming conventions in docs/api-principles.md
+[x] ensure repo-wide paths use hyphens where appropriate
 [ ] ensure Go code follows normal Go naming conventions
+[~] repo/docs naming conventions are aligned enough to proceed
 
 phase 3 - backend bootstrap
-[ ] initialize Go module under server/
-[ ] add Gin dependency
-[ ] create API entrypoint under server/cmd/api/
-[ ] implement minimal HTTP server startup
-[ ] add /health endpoint
-[ ] verify server runs locally
-[ ] verify /health returns success
+[x] initialize Go module under server/
+[x] add Gin dependency
+[x] create API entrypoint under server/cmd/api/
+[x] implement minimal HTTP server startup
+[x] add /health endpoint
+[x] verify server runs locally
+[x] verify /health returns success
 
 phase 4 - MongoDB integration
-[ ] add MongoDB Go driver
-[ ] create MongoDB connection layer
-[ ] create config file: server/configs/app-local.yaml
-[ ] load config at startup
-[ ] initialize MongoDB connection at startup
-[ ] verify backend connects successfully to MongoDB
+[x] add MongoDB Go driver
+[x] create MongoDB connection layer
+[x] create config file: server/configs/app-local.yaml
+[x] load config at startup
+[x] initialize MongoDB connection at startup
+[x] verify backend connects successfully to MongoDB
 
 phase 5 - users domain
-[ ] create server/internal/users/
-[ ] define user model
-[ ] implement create user flow
-[ ] implement get user by id flow
-[ ] add POST /users
-[ ] add GET /users/{id}
-[ ] persist users in MongoDB
-[ ] verify users can be created and retrieved
+[x] create server/internal/users/
+[x] define user model
+[x] implement user repository
+[x] implement create user flow
+[x] implement get user by id flow
+[x] add POST /users
+[x] add GET /users/{id}
+[x] persist users in MongoDB
+[x] verify users can be created and retrieved
+
+phase 5.5 - users validation + uniqueness cleanup
+[x] add basic create-user validation
+[x] validate required fields:
+        - username
+        - display_name
+        - email
+[x] normalize user input where appropriate
+[x] reject invalid Mongo user ids cleanly
+[x] add uniqueness checks for:
+        - username
+        - email
+[x] decide app-vs-db ownership for uniqueness enforcement
+        - DB owns actual uniqueness
+        - app owns friendly error handling
+[x] add MongoDB indexes for:
+        - username_normalized unique
+        - email_normalized unique
+[x] return clearer user-facing errors for duplicate username/email
+[x] verify invalid input is rejected
+[x] verify duplicate username is rejected
+[x] verify duplicate email is rejected
 
 phase 6 - authentication
-[ ] define minimal authentication approach
-[ ] implement login flow
-[ ] implement token-based authentication
-[ ] add auth middleware
-[ ] attach authenticated user context to requests
-[ ] protect routes where needed
-[ ] verify authenticated requests work
+[x] define minimal authentication approach
+
+step 1 - credentials + password hashing
+[x] add auth configuration:
+        - jwt signing key
+        - token expiry
+[x] create server/internal/auth/
+[x] define credential model
+[x] implement password hashing
+[x] implement credential repository
+[x] update create user flow to store password credentials
+[x] validate password on create user
+[x] verify user + credential are both created
+
+step 2 - login + jwt token issuance
+[x] define login request/response models
+[x] implement credential lookup by normalized email
+[x] implement login service flow
+[x] implement JWT token creation
+[x] add POST /auth/login
+[x] verify valid login returns token
+[x] verify invalid email/password is rejected
+
+step 3 - auth middleware + protected route
+[x] implement JWT token parsing/verification
+[x] add auth middleware
+[x] attach authenticated user id to request context
+[x] add protected test route
+[x] verify authenticated requests work
+[x] verify missing token is rejected
+[x] verify invalid token is rejected
+[x] make /auth/me return the current user profile
+
+step 4 - auth usability + hardening
+[x] create helper to safely get authenticated user id from context
+[x] standardize context key usage (avoid raw strings)
+[ ] optionally fetch user once in middleware (future-ready, not required now)
+[x] define rule: which routes require auth vs public
+[ ] apply middleware to at least one non-auth route (prove reuse)
+[x] refactor /auth/me to use auth helper + users domain cleanly
 
 phase 7 - spaces + channels + memberships
-[ ] create server/internal/spaces/
-[ ] create server/internal/channels/
-[ ] create server/internal/memberships/
-[ ] define space model
-[ ] define channel model
-[ ] define membership model
-[ ] implement create space flow
-[ ] implement join space flow
-[ ] implement create channel flow
-[ ] implement list channels in a space flow
-[ ] enforce membership-based access rules
-[ ] verify user can create and navigate a space
+[x] create server/internal/spaces/
+[x] define space model
+[x] implement create space flow
+[x] add POST /spaces
+[x] persist spaces in MongoDB
+
+[x] create server/internal/memberships/
+[x] define membership model
+[x] implement membership repository
+[x] add unique index for:
+        - space_id + user_id
+[x] create owner membership when a space is created
+[x] update create space flow to also create owner membership
+[x] verify creating a space also creates owner membership
+
+[x] implement join space flow
+[x] add POST /spaces/{id}/join
+
+[x] create server/internal/channels/
+[x] define channel model
+[x] implement channel repository
+[x] implement create channel flow
+[x] add POST /spaces/{id}/channels
+[x] implement list channels in a space flow
+[x] add GET /spaces/{id}/channels
+[x] enforce membership-based access rules
+[x] verify user can create and navigate a space
 
 phase 8 - messages over REST
-[ ] create server/internal/messages/
-[ ] define message model
-[ ] implement send message flow
-[ ] implement fetch recent messages flow
-[ ] implement fetch older messages flow using cursor pagination
-[ ] enforce canonical ordering:
+[x] create server/internal/messages/
+[x] define message model
+[x] implement send message flow
+[x] implement fetch recent messages flow
+[x] implement fetch older messages flow using cursor pagination
+[x] enforce canonical ordering:
         - created_at ascending
         - tie-break by message_id
-[ ] verify messages can be posted and read through REST
+[x] verify messages can be posted and read through REST
 
 phase 9 - realtime over WebSocket
 [ ] create server/internal/realtime/
@@ -158,3 +231,26 @@ phase 12 - future-ready scaffolding
         - edits
         - likes / reactions
         - ranking / activity
+
+to be prioritized 
+    mongodb audit records:
+        - created_by
+        - updated_by
+        - record_start_date
+        - record_end_date
+
+    username rules / identity
+        - preserve display casing for username
+        - enforce uniqueness on lowercase-normalized username
+        - add username_normalized field
+        - consider email_normalized field
+        - validate allowed username characters and length
+        - return friendly duplicate/validation errors
+
+    init / rollback / install scripts
+        - add local Linux init scripts
+        - add local Linux rollback scripts
+        - add local Linux install/setup scripts
+        - plan AWS init scripts for later deployment phase
+        - plan AWS rollback scripts for later deployment phase
+        - decide ownership between deploy/ and scripts/

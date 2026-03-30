@@ -2,12 +2,15 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+var ErrChannelNotFound = errors.New("channel not found")
 
 type Repository struct {
 	collection *mongo.Collection
@@ -32,6 +35,21 @@ func (r *Repository) Create(ctx context.Context, channel *Channel) error {
 
 	channel.ID = objectID
 	return nil
+}
+
+func (r *Repository) GetByID(ctx context.Context, channelID primitive.ObjectID) (*Channel, error) {
+	filter := bson.M{"_id": channelID}
+
+	var channel Channel
+	err := r.collection.FindOne(ctx, filter).Decode(&channel)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrChannelNotFound
+		}
+		return nil, fmt.Errorf("find channel by id: %w", err)
+	}
+
+	return &channel, nil
 }
 
 func (r *Repository) ListBySpaceID(ctx context.Context, spaceID primitive.ObjectID) ([]Channel, error) {

@@ -6,6 +6,7 @@ import (
 	"manumental-effort/server/internal/auth"
 	"manumental-effort/server/internal/channels"
 	"manumental-effort/server/internal/memberships"
+	"manumental-effort/server/internal/messages"
 	"manumental-effort/server/internal/platform/config"
 	"manumental-effort/server/internal/platform/mongodb"
 	"manumental-effort/server/internal/spaces"
@@ -54,6 +55,18 @@ func main() {
 	channelService := channels.NewService(channelRepository, membershipRepository)
 	channelHandler := channels.NewHandler(channelService)
 
+	messageRepository := messages.NewRepository(mongoClient.Database)
+
+	messageIndexCtx, messageIndexCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer messageIndexCancel()
+
+	if err := messageRepository.EnsureIndexes(messageIndexCtx); err != nil {
+		log.Fatalf("ensure message indexes: %v", err)
+	}
+
+	messageService := messages.NewService(messageRepository, channelRepository, membershipRepository)
+	messageHandler := messages.NewHandler(messageService)
+
 	authRepository := auth.NewRepository(mongoClient.Database)
 	tokenManager := auth.NewTokenManager(cfg.Auth.JWTSigningKey, cfg.Auth.TokenExpiryMinutes)
 	authService := auth.NewService(authRepository, tokenManager)
@@ -89,6 +102,11 @@ func main() {
 	spacesGroup.POST("/:id/join", spaceHandler.JoinSpace)
 	spacesGroup.POST("/:id/channels", channelHandler.CreateChannel)
 	spacesGroup.GET("/:id/channels", channelHandler.ListChannels)
+
+	channelsGroup := r.Group("/channels")
+	channelsGroup.Use(auth.AuthMiddleware(tokenManager))
+	channelsGroup.POST("/:id/messages", messageHandler.CreateMessage)
+	channelsGroup.GET("/:id/messages", messageHandler.ListMessages)
 
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("run server: %v", err)
