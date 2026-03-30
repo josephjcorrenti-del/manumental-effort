@@ -21,6 +21,10 @@ var (
 const DefaultMessageListLimit = 50
 const MaxMessageBodyLength = 2000
 
+type MessageBroadcaster interface {
+	BroadcastMessageCreated(message *Message)
+}
+
 type MessageRepository interface {
 	EnsureIndexes(ctx context.Context) error
 	Create(ctx context.Context, message *Message) error
@@ -32,21 +36,42 @@ type MessageRepository interface {
 	) ([]Message, error)
 }
 
+//type Service struct {
+//	messageRepository    MessageRepository
+//	channelRepository    *channels.Repository
+//	membershipRepository *memberships.Repository
+//}
+
 type Service struct {
 	messageRepository    MessageRepository
 	channelRepository    *channels.Repository
 	membershipRepository *memberships.Repository
+	broadcaster          MessageBroadcaster
 }
+
+//func NewService(
+//	messageRepository MessageRepository,
+//	channelRepository *channels.Repository,
+//	membershipRepository *memberships.Repository,
+//) *Service {
+//	return &Service{
+//		messageRepository:    messageRepository,
+//		channelRepository:    channelRepository,
+//		membershipRepository: membershipRepository,
+//	}
+//}
 
 func NewService(
 	messageRepository MessageRepository,
 	channelRepository *channels.Repository,
 	membershipRepository *memberships.Repository,
+	broadcaster MessageBroadcaster,
 ) *Service {
 	return &Service{
 		messageRepository:    messageRepository,
 		channelRepository:    channelRepository,
 		membershipRepository: membershipRepository,
+		broadcaster:          broadcaster,
 	}
 }
 
@@ -89,6 +114,10 @@ func (s *Service) CreateMessage(
 
 	if err := s.messageRepository.Create(ctx, message); err != nil {
 		return nil, err
+	}
+
+	if s.broadcaster != nil {
+		s.broadcaster.BroadcastMessageCreated(message)
 	}
 
 	return message, nil

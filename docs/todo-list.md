@@ -188,13 +188,14 @@ phase 8 - messages over REST
 [x] verify messages can be posted and read through REST
 
 phase 9 - realtime over WebSocket
-[ ] create server/internal/realtime/
-[ ] implement WebSocket endpoint
-[ ] implement connection lifecycle handling
-[ ] implement subscribe / unsubscribe flow for channel watching
-[ ] enforce access checks on channel subscription
-[ ] broadcast new messages to active channel subscribers
-[ ] verify live messages appear in connected clients
+[x] create server/internal/realtime/
+[x] implement GET /ws endpoint
+[x] authenticate websocket connections
+[x] implement connection lifecycle handling
+[x] implement subscribe / unsubscribe flow for channel watching
+[x] enforce access checks on channel subscription
+[x] broadcast new messages to active channel subscribers
+[x] verify live messages appear in connected clients
 
 phase 10 - frontend bootstrap
 [ ] initialize React app under client/web/

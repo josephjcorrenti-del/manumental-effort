@@ -9,6 +9,7 @@ import (
 	"manumental-effort/server/internal/messages"
 	"manumental-effort/server/internal/platform/config"
 	"manumental-effort/server/internal/platform/mongodb"
+	"manumental-effort/server/internal/realtime"
 	"manumental-effort/server/internal/spaces"
 	"manumental-effort/server/internal/users"
 	"net/http"
@@ -64,16 +65,27 @@ func main() {
 		log.Fatalf("ensure message indexes: %v", err)
 	}
 
-	messageService := messages.NewService(messageRepository, channelRepository, membershipRepository)
-	messageHandler := messages.NewHandler(messageService)
+	//messageService := messages.NewService(messageRepository, channelRepository, membershipRepository)
+	//messageHandler := messages.NewHandler(messageService)
 
 	authRepository := auth.NewRepository(mongoClient.Database)
 	tokenManager := auth.NewTokenManager(cfg.Auth.JWTSigningKey, cfg.Auth.TokenExpiryMinutes)
 	authService := auth.NewService(authRepository, tokenManager)
 	authHandler := auth.NewHandler(authService)
 
+	realtimeHub := realtime.NewHub(channelRepository, membershipRepository)
+	realtimeHandler := realtime.NewHandler(realtimeHub, tokenManager)
+
 	userService := users.NewService(userRepository, authRepository)
 	userHandler := users.NewHandler(userService)
+
+	messageService := messages.NewService(
+		messageRepository,
+		channelRepository,
+		membershipRepository,
+		realtimeHub,
+	)
+	messageHandler := messages.NewHandler(messageService)
 
 	spaceRepository := spaces.NewRepository(mongoClient.Database)
 	spaceService := spaces.NewService(spaceRepository, membershipRepository)
@@ -91,6 +103,7 @@ func main() {
 	r.POST("/users", userHandler.CreateUser)
 	r.GET("/users/:id", userHandler.GetUserByID)
 	r.POST("/auth/login", authHandler.Login)
+	r.GET("/ws", realtimeHandler.ServeWS)
 
 	authGroup := r.Group("/auth")
 	authGroup.Use(auth.AuthMiddleware(tokenManager))
