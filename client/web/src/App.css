@@ -1,0 +1,115 @@
+.app {
+  min-height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.app-header {
+  margin-bottom: 24px;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 240px 240px 240px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.messages-panel {
+  min-height: 500px;
+}
+
+label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+input,
+textarea,
+button {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 8px;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list li {
+  margin-bottom: 8px;
+}
+
+.list button.selected {
+  font-weight: bold;
+}
+
+.meta {
+  margin-top: 16px;
+  font-size: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.message-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.message-list {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 280px;
+  max-height: 420px;
+  overflow: auto;
+  margin-bottom: 12px;
+}
+
+.message-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.message-item:last-child {
+  border-bottom: none;
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.composer {
+  display: grid;
+  gap: 8px;
+}
+
+.error-banner {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #d33;
+  border-radius: 8px;
+  background: #fff0f0;
+}

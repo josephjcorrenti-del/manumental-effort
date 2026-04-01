@@ -8,6 +8,9 @@ phase 0 - local environment setup
 [x] install MongoDB locally
 [x] verify MongoDB is running
 [x] install Git if needed
+[x] install Node.js + npm
+[x] verify Node.js + npm installation
+[x] verify Node version is compatible with Vite
 
 phase 1 - project initialization
 [x] create root directory: ~/manumental-effort
@@ -198,15 +201,15 @@ phase 9 - realtime over WebSocket
 [x] verify live messages appear in connected clients
 
 phase 10 - frontend bootstrap
-[ ] initialize React app under client/web/
-[ ] create minimal application shell
-[ ] implement login view
-[ ] implement space list view
-[ ] implement channel list view
-[ ] implement message view
-[ ] connect frontend to REST API
-[ ] connect frontend to WebSocket updates
-[ ] verify end-to-end user flow works locally
+[x] initialize React app under client/web/
+[x] create minimal application shell
+[x] implement login view
+[x] implement space list view
+[x] implement channel list view
+[x] implement message view
+[x] connect frontend to REST API
+[x] connect frontend to WebSocket updates
+[x] verify end-to-end user flow works locally
 
 phase 11 - core UX + moderation basics
 [ ] implement soft delete in message storage model
