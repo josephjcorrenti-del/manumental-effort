@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gin-contrib/cors"
 	"log"
 	"manumental-effort/server/internal/auth"
 	"manumental-effort/server/internal/channels"
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	//r := gin.Default()
+
 	cfg, err := config.Load("configs/app-local.yaml")
 	if err != nil {
 		log.Fatalf("load config: %v", err)
@@ -65,9 +68,6 @@ func main() {
 		log.Fatalf("ensure message indexes: %v", err)
 	}
 
-	//messageService := messages.NewService(messageRepository, channelRepository, membershipRepository)
-	//messageHandler := messages.NewHandler(messageService)
-
 	authRepository := auth.NewRepository(mongoClient.Database)
 	tokenManager := auth.NewTokenManager(cfg.Auth.JWTSigningKey, cfg.Auth.TokenExpiryMinutes)
 	authService := auth.NewService(authRepository, tokenManager)
@@ -93,6 +93,14 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+	}))
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":   "ok",
@@ -115,6 +123,7 @@ func main() {
 	spacesGroup.POST("/:id/join", spaceHandler.JoinSpace)
 	spacesGroup.POST("/:id/channels", channelHandler.CreateChannel)
 	spacesGroup.GET("/:id/channels", channelHandler.ListChannels)
+	spacesGroup.GET("", spaceHandler.ListSpaces)
 
 	channelsGroup := r.Group("/channels")
 	channelsGroup.Use(auth.AuthMiddleware(tokenManager))

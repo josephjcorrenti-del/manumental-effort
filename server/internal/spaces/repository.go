@@ -47,3 +47,50 @@ func (r *Repository) GetByID(ctx context.Context, id primitive.ObjectID) (*Space
 
 	return &space, nil
 }
+
+func (s *Service) ListSpaces(ctx context.Context, userID string) ([]Space, error) {
+	objectUserID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id")
+	}
+
+	memberships, err := s.membershipRepository.ListByUserID(ctx, objectUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceIDs := make([]primitive.ObjectID, 0, len(memberships))
+	for _, m := range memberships {
+		spaceIDs = append(spaceIDs, m.SpaceID)
+	}
+
+	spaces, err := s.repository.ListByIDs(ctx, spaceIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaces, nil
+}
+
+func (r *Repository) ListByIDs(ctx context.Context, ids []primitive.ObjectID) ([]Space, error) {
+	if len(ids) == 0 {
+		return []Space{}, nil
+	}
+
+	filter := bson.M{
+		"_id": bson.M{"$in": ids},
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("find spaces by ids: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var spaces []Space
+	if err := cursor.All(ctx, &spaces); err != nil {
+		return nil, fmt.Errorf("decode spaces: %w", err)
+	}
+
+	return spaces, nil
+}

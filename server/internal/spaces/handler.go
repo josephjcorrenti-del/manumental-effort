@@ -91,3 +91,23 @@ func (h *Handler) JoinSpace(c *gin.Context) {
 		"status": "joined",
 	})
 }
+
+func (h *Handler) ListSpaces(c *gin.Context) {
+	userID, err := auth.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	spaces, err := h.service.ListSpaces(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to list spaces",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, spaces)
+}

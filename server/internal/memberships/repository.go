@@ -75,3 +75,22 @@ func (r *Repository) Exists(ctx context.Context, spaceID primitive.ObjectID, use
 
 	return count > 0, nil
 }
+
+func (r *Repository) ListByUserID(ctx context.Context, userID primitive.ObjectID) ([]Membership, error) {
+	filter := bson.M{
+		"user_id": userID,
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("find memberships by user id: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var memberships []Membership
+	if err := cursor.All(ctx, &memberships); err != nil {
+		return nil, fmt.Errorf("decode memberships: %w", err)
+	}
+
+	return memberships, nil
+}
